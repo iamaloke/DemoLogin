@@ -9,30 +9,34 @@ import SwiftUI
 
 struct LoginView: View {
     
-    @State var username: String = ""
-    @State var password: String = ""
+    @StateObject var viewModel: LoginViewModel
     
     var body: some View {
         VStack {
             Form {
                 Section {
-                    TextField(text: $username) {
+                    TextField(text: $viewModel.username) {
                         Text("Email")
                     }
                     .padding(.vertical, 10)
                     
-                    SecureField(text: $password) {
+                    SecureField(text: $viewModel.password) {
                         Text("Password")
                     }
                     .padding(.vertical, 10)
                     
                     Button {
-                        
+                        viewModel.login()
                     } label: {
                         Text("Submit")
                     }
                     .buttonStyle(.borderedProminent)
                     .padding(.vertical, 10)
+                    .disabled(!(viewModel.errorMessage ?? "").isEmpty)
+                    
+                    if let error = viewModel.errorMessage {
+                        Text(error).foregroundColor(.red)
+                    }
                 }
             }
         }
@@ -41,5 +45,10 @@ struct LoginView: View {
 }
 
 #Preview {
-    LoginView()
+    let apiService = DefaultAPIService()
+    let dataSource = RemoteAuthDataSource(apiService: apiService)
+    let repository = AuthRepositoryImpl(remoteDataSource: dataSource)
+    let loginUseCase = LoginUseCaseImpl(repository: repository)
+    let viewModel = LoginViewModel(loginUseCase: loginUseCase)
+    LoginView(viewModel: viewModel)
 }
